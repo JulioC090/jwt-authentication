@@ -8,5 +8,8 @@
     "eslint:recommended",
     "next/core-web-vitals",
     "plugin:prettier/recommended"
-  ]
+  ],
+  "rules": {
+    "no-unused-vars": "off"
+  }
 }

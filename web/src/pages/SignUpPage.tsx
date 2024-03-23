@@ -2,14 +2,24 @@
 
 import Button from '@/components/Button';
 import { TextInput } from '@/components/TextInput';
+import { AuthContext } from '@/contexts/AuthContext';
 import { Envelope, Lock, User } from '@phosphor-icons/react/dist/ssr';
 import Link from 'next/link';
-import { FormEvent } from 'react';
+import { useContext } from 'react';
+import { SubmitHandler, useForm } from 'react-hook-form';
+
+interface ISignUpFields {
+  name: string;
+  email: string;
+  password: string;
+}
 
 export default function SignUpPage() {
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    console.log('Entrando na conta');
+  const { register, handleSubmit } = useForm<ISignUpFields>();
+  const { signUp } = useContext(AuthContext);
+
+  const handleSignUp: SubmitHandler<ISignUpFields> = async (data) => {
+    signUp(data);
   };
 
   return (
@@ -18,7 +28,7 @@ export default function SignUpPage() {
         <h2 className="text-zinc-100 mt-6 text-center text-3xl font-extrabold">
           Criar uma conta
         </h2>
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+        <form className="mt-8 space-y-6" onSubmit={handleSubmit(handleSignUp)}>
           <label htmlFor="name" className="flex flex-col gap-3">
             <span className="text-zinc-100 font-semibold">Seu nome</span>
             <TextInput.Root>
@@ -26,6 +36,7 @@ export default function SignUpPage() {
                 <User />
               </TextInput.Icon>
               <TextInput.Input
+                {...register('name')}
                 type="text"
                 id="name"
                 placeholder="Digite seu nome"
@@ -43,6 +54,7 @@ export default function SignUpPage() {
                 <Envelope />
               </TextInput.Icon>
               <TextInput.Input
+                {...register('email')}
                 type="email"
                 id="email"
                 placeholder="Digite seu e-mail"
@@ -58,6 +70,7 @@ export default function SignUpPage() {
                 <Lock />
               </TextInput.Icon>
               <TextInput.Input
+                {...register('password')}
                 type="password"
                 id="password"
                 placeholder="••••••••"

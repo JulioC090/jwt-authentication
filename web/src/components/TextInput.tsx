@@ -1,5 +1,5 @@
 import { Slot } from '@radix-ui/react-slot';
-import { InputHTMLAttributes, ReactNode } from 'react';
+import { InputHTMLAttributes, ReactNode, forwardRef } from 'react';
 
 export interface TextInputRootProps {
   children: ReactNode;
@@ -24,14 +24,17 @@ function TextInputIcon(props: TextInputIconProps) {
 export interface TextInputInputProps
   extends InputHTMLAttributes<HTMLInputElement> {}
 
-function TextInputInput(props: TextInputInputProps) {
-  return (
+export const TextInputInput = forwardRef<HTMLInputElement, TextInputInputProps>(
+  (props, ref) => (
     <input
       className="bg-transparent flex-1 text-zinc-100 text-sm placeholder:text-zinc-400 outline-none"
+      ref={ref}
       {...props}
     />
-  );
-}
+  ),
+);
+
+TextInputInput.displayName = 'TextInputInput';
 
 export const TextInput = {
   Root: TextInputRoot,
