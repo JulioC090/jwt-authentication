@@ -1,4 +1,5 @@
 import cors from '@fastify/cors';
+import env from 'config/env';
 import fastify, {
   FastifyInstance,
   FastifyReply,
@@ -27,8 +28,9 @@ export interface RequestWithAuthInfo extends FastifyRequest {
 }
 
 const users: Array<User> = [];
-const SECRET = 'c24fdfdde70947f16f6380f410ae5442ed475e20';
 const blacklist: Blacklist = {};
+const port = env.serverPort;
+const secret = env.serverSecret;
 
 setInterval(() => {
   const now = Date.now();
@@ -53,7 +55,7 @@ const authenticateDecorator = async (
   const token = request.headers.authorization!.replace('Bearer ', '');
   if (!token) reply.code(401).send();
 
-  jwt.verify(token!, SECRET, (err, payload) => {
+  jwt.verify(token!, secret, (err, payload) => {
     if (err) reply.code(401).send();
     if (blacklist[(payload as JwtPayload).email]) reply.code(401).send();
     (request as RequestWithAuthInfo).payload = payload as JwtPayload;
@@ -67,7 +69,7 @@ const publicRoutes = async (fastify: FastifyInstance) => {
 
     users.push({ name, email, password });
 
-    const token = jwt.sign({ email }, SECRET, { expiresIn: 300 });
+    const token = jwt.sign({ email }, secret, { expiresIn: 300 });
     reply.code(201).send({ token });
   });
 
@@ -80,7 +82,7 @@ const publicRoutes = async (fastify: FastifyInstance) => {
 
     if (user.length === 0) return reply.code(401).send({ auth: false });
 
-    const token = jwt.sign({ email }, SECRET, { expiresIn: 300 });
+    const token = jwt.sign({ email }, secret, { expiresIn: 300 });
     reply.code(201).send({ auth: true, token });
   });
 };
@@ -107,6 +109,6 @@ const privateRoutes = async (fastify: FastifyInstance) => {
 app.register(publicRoutes);
 app.register(privateRoutes);
 
-app.listen({ port: 3000 }, (err, address) => {
+app.listen({ port }, (err, address) => {
   console.log(`Server starting in ${address}`);
 });
