@@ -1,8 +1,9 @@
 'use client';
 
 import getAxiosHttpClient from '@/infra/axiosHttpClient';
+import Cookie from 'js-cookie';
+import jwt, { JwtPayload } from 'jsonwebtoken';
 import { useRouter } from 'next/navigation';
-import { destroyCookie, parseCookies, setCookie } from 'nookies';
 import { createContext } from 'react';
 
 type SignInData = {
@@ -17,7 +18,6 @@ type SignUpData = {
 };
 
 interface AuthContextType {
-  isAuthenticated: boolean;
   signIn(data: SignInData): void;
   signUp(data: SignUpData): void;
   logout(): void;
@@ -34,8 +34,6 @@ const httpClient = getAxiosHttpClient();
 export function AuthProvider({ children }: AuthProviderProps) {
   const router = useRouter();
 
-  const isAuthenticated = !!parseCookies()['nextauth.token'];
-
   async function signIn({ email, password }: SignInData) {
     const response = await httpClient<{ token: string }>({
       method: 'post',
@@ -48,9 +46,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     const { token } = response.data;
 
-    setCookie(undefined, 'nextauth.token', token, {
-      maxAge: 60 * 60 * 1,
-    });
+    const { exp } = jwt.decode(token) as JwtPayload;
+    Cookie.set('auth_token', token, { expires: new Date(exp! * 1000) });
 
     httpClient.defaults.headers['Authorization'] = `Bearer ${token}`;
 
@@ -70,9 +67,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     const { token } = response.data;
 
-    setCookie(undefined, 'nextauth.token', token, {
-      maxAge: 60 * 60 * 1,
-    });
+    const { exp } = jwt.decode(token) as JwtPayload;
+    Cookie.set('auth_token', token, { expires: new Date(exp! * 1000) });
 
     httpClient.defaults.headers['Authorization'] = `Bearer ${token}`;
 
@@ -85,7 +81,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       url: '/logout',
     });
 
-    destroyCookie(undefined, 'nextauth.token');
+    Cookie.remove('auth_token');
 
     httpClient.defaults.headers['Authorization'] = '';
 
@@ -93,7 +89,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, signIn, signUp, logout }}>
+    <AuthContext.Provider value={{ signIn, signUp, logout }}>
       {children}
     </AuthContext.Provider>
   );

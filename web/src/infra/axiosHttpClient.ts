@@ -1,8 +1,8 @@
 import axios from 'axios';
-import { parseCookies } from 'nookies';
+import Cookie from 'js-cookie';
 
 export default function getAxiosHttpClient() {
-  const { 'nextauth.token': token } = parseCookies();
+  const token = Cookie.get('auth_token');
 
   const axioshttpClient = axios.create({ baseURL: 'http://localhost:5000' });
 
