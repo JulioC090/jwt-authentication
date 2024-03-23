@@ -18,7 +18,7 @@ type SignUpData = {
 };
 
 interface AuthContextType {
-  signIn(data: SignInData): void;
+  signIn(data: SignInData): Promise<false | undefined>;
   signUp(data: SignUpData): void;
   logout(): void;
 }
@@ -29,10 +29,20 @@ interface AuthProviderProps {
 
 export const AuthContext = createContext({} as AuthContextType);
 
-const httpClient = getAxiosHttpClient();
-
 export function AuthProvider({ children }: AuthProviderProps) {
   const router = useRouter();
+  const httpClient = getAxiosHttpClient(router);
+
+  function setToken(token: string) {
+    const { exp } = jwt.decode(token) as JwtPayload;
+    Cookie.set('auth_token', token, { expires: new Date(exp! * 1000) });
+    router.push('/home');
+  }
+
+  function removeToken() {
+    Cookie.remove('auth_token');
+    router.push('/login');
+  }
 
   async function signIn({ email, password }: SignInData) {
     const response = await httpClient<{ token: string }>({
@@ -44,14 +54,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
       },
     });
 
-    const { token } = response.data;
+    if (response.status === 401) return false;
 
-    const { exp } = jwt.decode(token) as JwtPayload;
-    Cookie.set('auth_token', token, { expires: new Date(exp! * 1000) });
-
-    httpClient.defaults.headers['Authorization'] = `Bearer ${token}`;
-
-    router.push('/home');
+    setToken(response.data.token);
   }
 
   async function signUp({ name, email, password }: SignUpData) {
@@ -65,14 +70,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       },
     });
 
-    const { token } = response.data;
-
-    const { exp } = jwt.decode(token) as JwtPayload;
-    Cookie.set('auth_token', token, { expires: new Date(exp! * 1000) });
-
-    httpClient.defaults.headers['Authorization'] = `Bearer ${token}`;
-
-    router.push('/home');
+    setToken(response.data.token);
   }
 
   async function logout() {
@@ -81,15 +79,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
       url: '/logout',
     });
 
-    Cookie.remove('auth_token');
-
-    httpClient.defaults.headers['Authorization'] = '';
-
-    router.push('/login');
+    removeToken();
   }
 
   return (
-    <AuthContext.Provider value={{ signIn, signUp, logout }}>
+    <AuthContext.Provider value={{ signUp, signIn, logout }}>
       {children}
     </AuthContext.Provider>
   );

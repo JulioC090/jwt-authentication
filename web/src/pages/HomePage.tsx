@@ -3,20 +3,22 @@
 import Button from '@/components/Button';
 import { AuthContext } from '@/contexts/AuthContext';
 import getAxiosHttpClient from '@/infra/axiosHttpClient';
+import { useRouter } from 'next/navigation';
 import { useContext, useEffect, useState } from 'react';
 
 export default function HomePage() {
   const [userName, setUserName] = useState<string>();
+  const router = useRouter();
   const { logout } = useContext(AuthContext);
 
   useEffect(() => {
     async function getName() {
-      const axiosHttpClient = getAxiosHttpClient();
+      const axiosHttpClient = getAxiosHttpClient(router);
       const response = await axiosHttpClient({ method: 'get', url: '/name' });
       setUserName(response.data);
     }
     getName();
-  }, []);
+  }, [router]);
 
   return (
     <div className="min-h-screen bg-gradient-to-t from-violet-900 to-indigo-500 flex items-center justify-center">

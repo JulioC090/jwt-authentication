@@ -5,7 +5,7 @@ import { TextInput } from '@/components/TextInput';
 import { AuthContext } from '@/contexts/AuthContext';
 import { Envelope, Lock } from '@phosphor-icons/react/dist/ssr';
 import Link from 'next/link';
-import { useContext } from 'react';
+import { useContext, useState } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
 
 interface ISignInFields {
@@ -17,9 +17,11 @@ interface ISignInFields {
 export default function LoginPage() {
   const { register, handleSubmit } = useForm<ISignInFields>();
   const { signIn } = useContext(AuthContext);
+  const [error, setError] = useState<string>();
 
   const handleSignIn: SubmitHandler<ISignInFields> = async (data) => {
-    signIn(data);
+    const failed = await signIn(data);
+    if (failed === false) setError('Usuário ou Senha incorretos');
   };
 
   return (
@@ -62,6 +64,10 @@ export default function LoginPage() {
               />
             </TextInput.Root>
           </label>
+
+          {error && (
+            <p className="text-sm font-semibold text-red-600">{error}</p>
+          )}
 
           <Button type="submit">Entrar</Button>
         </form>
